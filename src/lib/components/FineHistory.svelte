@@ -4,7 +4,7 @@
 
   let { database } = $props();
 
-  let history: { date: Date; explanation: string }[] = $state([]);
+  let history: { date: Date; name: string; explanation: string }[] = $state([]);
   
   let currentPage: number = $state(1);
   const itemsPerPage: number = 5;
@@ -28,13 +28,21 @@
   async function getFines() {
     const db_collection = collection(database, "prikk_melding");
     const db_snapshot = await getDocs(db_collection);
-    const fine_list: { date: Date; explanation: string }[] = db_snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        date: data.date?.toDate ? data.date.toDate() : data.date ? new Date(data.date) : null,
-        explanation: data.explanation ?? data.forklaring
-      }
-    });
+
+    const fine_list: { date: Date; name: string; explanation: string }[] =
+      db_snapshot.docs.map((doc) => {
+        const data = doc.data();
+
+        return {
+          date: data.date?.toDate
+            ? data.date.toDate()
+            : data.date
+              ? new Date(data.date)
+              : null,
+          name: data.name ?? "",
+          explanation: data.explanation ?? data.forklaring ?? ""
+        };
+      });
 
     fine_list.sort((a, b) => {
       if (!a.date) return 1;
@@ -42,19 +50,20 @@
       return b.date.getTime() - a.date.getTime();
     });
 
-    console.log("Retrieved fines from db")
     return fine_list;
   }
 
   function formatDate(date?: Date | null): string {
-      if (!date || isNaN(date.getTime())) {
-        return "Dato utilgjengelig";
-      }
-      const day = String(date.getDate()).padStart(2, "0");
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const year = date.getFullYear();
-      return `${day}.${month}.${year}`;
+    if (!date || isNaN(date.getTime())) {
+      return "Dato utilgjengelig";
     }
+
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+
+    return `${day}.${month}.${year}`;
+  }
 
   onMount(async () => {
     history = await getFines();
@@ -63,10 +72,10 @@
 
 {#each pagedHistory() as entry}
   <li>
-    <strong>{formatDate(entry.date)}</strong> – {entry.explanation}
+    <strong>{formatDate(entry.date)}</strong> – 
+    <strong>{entry.name}</strong>: {entry.explanation}
   </li>
 {/each}
-
 
 <div style="text-align:center; margin-top:1rem;">
   <button onclick={prevPage} disabled={currentPage === 1}>←</button>

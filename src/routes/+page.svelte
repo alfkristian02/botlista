@@ -100,7 +100,6 @@
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-
   .menu {
     position: relative;
     display: flex;
